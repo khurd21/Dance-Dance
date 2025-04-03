@@ -5,6 +5,9 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/VideoMode.hpp>
+#include <SFML/System/Vector2.hpp>
+
+#include <cmath>
 
 namespace dd {
 
