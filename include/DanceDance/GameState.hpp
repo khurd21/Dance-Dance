@@ -3,7 +3,10 @@
 
 namespace dd {
 
-enum class GameState { Home, Play, Instructions, Settings };
+enum class GameState {
+    Home,
+    Play,
+};
 
 } // namespace dd
 

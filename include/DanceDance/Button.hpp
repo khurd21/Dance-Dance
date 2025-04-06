@@ -7,25 +7,26 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Text.hpp>
 
-#include <DanceDance/IScene.hpp>
-
 #include <string>
+
+#include <DanceDance/EventSystem.hpp>
+#include <DanceDance/IScene.hpp>
 
 namespace dd {
 
 class Button : public IScene {
   public:
-    explicit Button(const std::string& label, const sf::Font& font, const sf::Vector2f& position);
+    explicit Button(const std::string& label, const sf::Font& font, const sf::Vector2f& position, EventSystem& eventSystem);
     void handleEvent(const sf::Event& event) override;
     void update(float dt) override;
 
   private:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
-    sf::RectangleShape m_rectangleShape;
     sf::Text m_text;
     bool m_isHovering{};
     bool m_isSelected{};
+    EventSystem& m_eventSystem;
 };
 
 } // namespace dd
