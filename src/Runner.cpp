@@ -19,7 +19,7 @@ Runner::Runner() : m_currentState(GameState::Home), m_font("assets/fonts/perfect
     const auto videoMode = sf::VideoMode::getFullscreenModes().at(0);
     m_renderWindow = sf::RenderWindow(videoMode, "Dance Dance", sf::State::Fullscreen);
     m_states.emplace(GameState::Home, std::make_unique<MainMenu>(m_font, videoMode, m_eventSystem));
-    m_states.emplace(GameState::Play, std::make_unique<Game>(m_eventSystem));
+    m_states.emplace(GameState::Play, std::make_unique<Game>(videoMode, m_eventSystem));
     m_eventSystem.subscribe<ExitGameEvent>([this](const auto&) { m_renderWindow.close(); });
     m_eventSystem.subscribe<GameStateChangeEvent>([this](const auto& event) { m_currentState = event.to; });
 }
