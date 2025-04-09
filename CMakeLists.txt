@@ -15,10 +15,12 @@ FetchContent_MakeAvailable(SFML)
 
 set(sources
     src/main.cpp
+    src/Arrow.cpp
     src/Button.cpp
     src/MainMenu.cpp
     src/Runner.cpp
     src/Game.cpp
+    src/Tape.cpp
 )
 
 add_executable(DanceDance ${sources})

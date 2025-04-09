@@ -4,17 +4,20 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Window/VideoMode.hpp>
 
+#include <DanceDance/Arrow.hpp>
 #include <DanceDance/EventSystem.hpp>
 #include <DanceDance/IScene.hpp>
 
 #include <filesystem>
+#include <vector>
 
 namespace dd {
 
 class Game : public IScene {
   public:
-    explicit Game(EventSystem& eventSystem);
+    explicit Game(const sf::VideoMode& videoMode, EventSystem& eventSystem);
     void handleEvent(const sf::Event& event) override;
     void update(float dt) override;
 
@@ -23,9 +26,12 @@ class Game : public IScene {
 
     sf::Texture m_defaultTexture;
     sf::Texture m_onHoverTexture;
-    bool m_isHovering{};
-
     sf::Sprite m_backButton;
+    sf::VideoMode m_videoMode;
+
+    bool m_isHovering{};
+    std::vector<Arrow> m_stationaryArrows;
+
     EventSystem& m_eventSystem;
 };
 
