@@ -4,8 +4,13 @@
 #include <string>
 
 #include <DanceDance/GameState.hpp>
+#include <DanceDance/Tape.hpp>
 
 namespace dd {
+
+struct TapeLoadedEvent {
+    Tape tape;
+};
 
 struct ButtonClickedEvent {
     std::string buttonName;

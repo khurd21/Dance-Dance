@@ -11,6 +11,7 @@ namespace dd {
 class Tape {
   public:
     explicit Tape(const std::filesystem::path& file);
+    Tape() = default;
 
     struct Frame {
         bool left{};

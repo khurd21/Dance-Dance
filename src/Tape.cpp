@@ -32,6 +32,9 @@ Tape::Tape(const std::filesystem::path& file) {
     }
 
     while (std::getline(stream, line)) {
+        if (line.empty()) {
+            continue;
+        }
         if (line.size() != 4) {
             throw std::runtime_error(std::format("Recieved tape line of size {}. Expected size 4.", line.size()));
         }

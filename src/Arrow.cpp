@@ -7,18 +7,21 @@
 #include <SFML/Window/Event.hpp>
 
 #include <DanceDance/Arrow.hpp>
+#include <DanceDance/SVGTexture.hpp>
 
 #include <unordered_map>
 
 namespace {
 
-sf::Texture arrowTexture("assets/images/left-arrow-white-256x256.png");
+dd::SVGTexture arrowTexture("assets/images/left-arrow-outline.svg");
+dd::SVGTexture arrowFilledTexture("assets/images/left-arrow-filled.svg");
 
-}
+} // namespace
 
 namespace dd {
 
-Arrow::Arrow(Direction direction, const sf::Vector2f& position) : m_sprite(arrowTexture) {
+Arrow::Arrow(Direction direction, const sf::Vector2f& position, bool isFilled)
+    : m_sprite(isFilled ? arrowFilledTexture.getTexture() : arrowTexture.getTexture()) {
     std::unordered_map<Direction, sf::Angle> degrees{
         {Direction::Left, sf::degrees(0.f)},
         {Direction::Up, sf::degrees(90.f)},
@@ -26,7 +29,7 @@ Arrow::Arrow(Direction direction, const sf::Vector2f& position) : m_sprite(arrow
         {Direction::Right, sf::degrees(180.f)},
     };
     arrowTexture.setSmooth(true);
-    m_sprite.setScale({0.3f, 0.3f});
+    m_sprite.setScale({0.2f, 0.2f});
     m_sprite.setOrigin({m_sprite.getLocalBounds().size.x / 2.f, m_sprite.getLocalBounds().size.y / 2.f});
     m_sprite.setPosition(position);
     if (degrees.contains(direction)) {

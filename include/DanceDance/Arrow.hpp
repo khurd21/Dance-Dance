@@ -16,7 +16,7 @@ class Arrow : public IScene {
   public:
     enum class Direction { Left, Up, Down, Right };
 
-    explicit Arrow(Direction direction, const sf::Vector2f& position);
+    explicit Arrow(Direction direction, const sf::Vector2f& position, bool isFilled = false);
     void handleEvent(const sf::Event& event) override;
     void update(float dt) override;
 
