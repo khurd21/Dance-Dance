@@ -22,7 +22,7 @@ MainMenu::MainMenu(const sf::Font& font, const sf::VideoMode& videoMode, EventSy
     applySettingsOptions(font);
 }
 
-void MainMenu::handleEvent(const sf::Event& event) {
+void MainMenu::handleEvent(const sf::Event& event, sf::View*) {
     std::ranges::for_each(m_options, [&](auto& option) { option.handleEvent(event); });
     if (event.is<sf::Event::MouseMoved>()) {
         const auto& mousePos = event.getIf<sf::Event::MouseMoved>()->position;
@@ -67,11 +67,7 @@ void MainMenu::applySettingsOptions(const sf::Font& font) {
     m_eventSystem.subscribe<ButtonClickedEvent>([this](const auto& event) {
         const auto& name = event.buttonName;
         if ("Play" == name) {
-            // TODO: Make a new Scene called LoadSong and have game change state to that instead of Play.
-            // TODO: If back button is pressed, go back to Home
-            // TODO: If a song is selected and "Confirm" is selected, load the tape via event system and
-            // TODO: change game state to Play
-            m_eventSystem.publish(GameStateChangeEvent{.from = GameState::Home, .to = GameState::Play});
+            m_eventSystem.publish(GameStateChangeEvent{.from = GameState::Home, .to = GameState::SelectSong});
         } else if ("Exit" == name) {
             m_eventSystem.publish(ExitGameEvent());
         }

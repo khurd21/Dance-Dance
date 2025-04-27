@@ -20,17 +20,12 @@ Tape::Tape(const std::filesystem::path& file) {
         throw std::runtime_error(std::format("Failed to open file: {}", file.string()));
     }
 
+    std::string bpm;
+    std::getline(stream, m_title);
+    std::getline(stream, bpm);
+    m_bpm = std::stof(bpm);
+
     std::string line;
-    if (!std::getline(stream, line)) {
-        throw std::runtime_error("The tape file is empty.");
-    }
-
-    std::istringstream iss(line);
-    std::string label;
-    if (!(iss >> label >> m_bpm) || label != "BPM:") {
-        throw std::runtime_error("Invalid BPM format.");
-    }
-
     while (std::getline(stream, line)) {
         if (line.empty()) {
             continue;
@@ -50,11 +45,13 @@ Tape::Tape(const std::filesystem::path& file) {
 
 float Tape::getBPM() const { return m_bpm; }
 
+const std::string& Tape::getTitle() const { return m_title; }
+
 std::optional<Tape::Frame> Tape::getNextFrame() {
-    if (m_currentFrame >= m_tape.cend()) {
+    if (m_currentFrameIndex >= m_tape.size()) {
         return std::nullopt;
     }
-    return *m_currentFrame++;
+    return m_tape.at(m_currentFrameIndex++);
 }
 
 } // namespace dd

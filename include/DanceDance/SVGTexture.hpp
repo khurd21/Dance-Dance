@@ -11,10 +11,12 @@ namespace dd {
 
 class SVGTexture {
   public:
-    SVGTexture(const std::filesystem::path& path, float scale = 1.f);
+    explicit SVGTexture(const std::filesystem::path& path, float scale = 1.f);
     ~SVGTexture();
     SVGTexture& operator=(SVGTexture&) = delete;
     SVGTexture(const SVGTexture&) = delete;
+    SVGTexture(SVGTexture&&);
+    SVGTexture& operator=(SVGTexture&&);
 
     void setScale(float scale);
     float getScale() const;

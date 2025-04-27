@@ -32,13 +32,14 @@ struct SVGTexture::SVGData {
     SVGData& operator=(const SVGData&) = delete;
 };
 
-SVGTexture::SVGTexture(const std::filesystem::path& path, float scale) : m_scale(scale) {
-    m_svgData = std::make_unique<SVGData>();
+SVGTexture::SVGTexture(const std::filesystem::path& path, float scale) : m_svgData(std::make_unique<SVGData>()), m_scale(scale) {
     m_svgData->rasterizer = nsvgCreateRasterizer();
     m_svgData->image = nsvgParseFromFile(std::filesystem::absolute(path).string().c_str(), "px", 96);
     rasterize();
 }
 
+SVGTexture::SVGTexture(SVGTexture&&) = default;
+SVGTexture& SVGTexture::operator=(SVGTexture&&) = default;
 SVGTexture::~SVGTexture() = default;
 
 void SVGTexture::setScale(float scale) {
