@@ -6,6 +6,7 @@
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/VideoMode.hpp>
+#include <SFML/Graphics/View.hpp>
 
 #include <DanceDance/Button.hpp>
 #include <DanceDance/EventSystem.hpp>
@@ -18,7 +19,7 @@ namespace dd {
 class MainMenu : public IScene {
   public:
     explicit MainMenu(const sf::Font& font, const sf::VideoMode& videoMode, EventSystem& eventSystem);
-    void handleEvent(const sf::Event& event) override;
+    void handleEvent(const sf::Event& event, sf::View* = nullptr) override;
     void update(float dt) override;
 
   private:

@@ -6,6 +6,7 @@ namespace dd {
 enum class GameState {
     Home,
     Play,
+    SelectSong,
 };
 
 } // namespace dd

@@ -6,6 +6,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Graphics/View.hpp>
 
 #include <string>
 
@@ -21,15 +22,27 @@ Button::Button(const std::string& label, const sf::Font& font, const sf::Vector2
     m_text.setOrigin({m_text.getLocalBounds().size.x / 2.f, m_text.getLocalBounds().size.y / 2.f});
 }
 
-void Button::handleEvent(const sf::Event& event) {
+void Button::handleEvent(const sf::Event& event, sf::View* view) {
+    const auto checkCollision = [this](const sf::Vector2f& mousePos, const sf::View* view) {
+        if (!view) {
+            return m_text.getGlobalBounds().contains(mousePos);
+        }
+        const auto viewMousePos = sf::Vector2f{
+            (mousePos.x - view->getViewport().position.x * view->getSize().x) / view->getViewport().size.x,
+            (mousePos.y - view->getViewport().position.y * view->getSize().y) / view->getViewport().size.y
+        };
+        const auto transformedBounds = m_text.getTransform().transformRect(m_text.getLocalBounds());
+        return transformedBounds.contains(viewMousePos);
+    };
+
     if (const auto mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
-        const auto& position = mouseMoved->position;
-        m_isHovering = m_text.getGlobalBounds().contains(static_cast<sf::Vector2f>(position));
-    }
+        const auto position = static_cast<sf::Vector2f>(mouseMoved->position);
+        m_isHovering = checkCollision(position, view);
+   }
     if (const auto mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (sf::Mouse::Button::Left == mouseReleased->button) {
-            const auto& position = mouseReleased->position;
-            m_isSelected = m_text.getGlobalBounds().contains(static_cast<sf::Vector2f>(position));
+            const auto position = static_cast<sf::Vector2f>(mouseReleased->position);
+            m_isSelected = checkCollision(position, view);
             if (m_isSelected) {
                 m_eventSystem.publish(ButtonClickedEvent{.buttonName = m_text.getString()});
             }

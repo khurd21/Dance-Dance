@@ -7,6 +7,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Graphics/View.hpp>
 
 #include <DanceDance/IScene.hpp>
 
@@ -17,13 +18,17 @@ class Arrow : public IScene {
     enum class Direction { Left, Up, Down, Right };
 
     explicit Arrow(Direction direction, const sf::Vector2f& position, bool isFilled = false);
-    void handleEvent(const sf::Event& event) override;
+    void handleEvent(const sf::Event& event, sf::View* = nullptr) override;
     void update(float dt) override;
+    void move(sf::Vector2f offset);
+    sf::Vector2f getPosition() const;
+    Direction getDirection() const;
 
   private:
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
     sf::Sprite m_sprite;
+    Direction m_direction{};
 };
 
 } // namespace dd

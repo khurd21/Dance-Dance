@@ -4,24 +4,39 @@
 #include <DanceDance/GameEvents.hpp>
 #include <DanceDance/Tape.hpp>
 
+#include <SFML/Graphics/Color.hpp>
+#include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Angle.hpp>
+#include <SFML/System/String.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Window/Mouse.hpp>
 #include <SFML/Window/VideoMode.hpp>
+#include <SFML/Graphics/View.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
+#include <limits>
 #include <optional>
+#include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace {
+
+sf::Texture defaultTexture = []() {
+    auto texture = sf::Texture("assets/images/back-button-white-32x32.png");
+    texture.setSmooth(true);
+    return texture;
+}();
 
 sf::Vector2f getPosition(const sf::VideoMode& videoMode, dd::Arrow::Direction direction) {
     using Direction = dd::Arrow::Direction;
@@ -41,51 +56,103 @@ sf::Vector2f getPosition(const sf::VideoMode& videoMode, dd::Arrow::Direction di
     const auto totalWidth = videoMode.size.x * 0.3f;
     const auto spacing = totalWidth / (arrowCount - 1);
     const auto offset = offsets.at(direction);
-    return {centerX - totalWidth / 2.f + offsets.at(direction) * spacing, y};
+    return {centerX - totalWidth / 2.f + offset * spacing, y};
 }
+
+constexpr auto perfectWindow = 20.f;
+constexpr auto goodWindow = 80.f;
+constexpr auto missWindow = 160.f;
 
 } // namespace
 
 namespace dd {
 
-struct Game::MovingArrow {
-    Arrow arrow;
-    float startPosition{};
-    float endPosition{};
-    float elapsed{};
-    float travelTime{};
-    bool isFading{false};
-    float alpha{255.f};
-};
-
-Game::Game(const sf::VideoMode& videoMode, EventSystem& eventSystem)
-    : m_defaultTexture("assets/images/back-button-white-32x32.png"), m_backButton(m_defaultTexture), m_eventSystem(eventSystem),
-      m_videoMode(videoMode) {
-    m_defaultTexture.setSmooth(true);
+Game::Game(const sf::Font& font, const sf::VideoMode& videoMode, EventSystem& eventSystem)
+    : m_scoreText(font, "0", 80), m_backButton(defaultTexture), m_eventSystem(eventSystem), m_videoMode(videoMode) {
     m_backButton.setPosition({20.f, 20.f});
     m_backButton.setScale({1.2f, 1.2f});
+    m_scoreText.setOrigin({m_scoreText.getLocalBounds().size.x, 0.f});
+    m_scoreText.setPosition({videoMode.size.x / 1.1f, 20.f});
 
-    m_stationaryArrows.push_back(Arrow(Arrow::Direction::Left, getPosition(m_videoMode, Arrow::Direction::Left)));
-    m_stationaryArrows.push_back(Arrow(Arrow::Direction::Up, getPosition(m_videoMode, Arrow::Direction::Up)));
-    m_stationaryArrows.push_back(Arrow(Arrow::Direction::Down, getPosition(m_videoMode, Arrow::Direction::Down)));
-    m_stationaryArrows.push_back(Arrow(Arrow::Direction::Right, getPosition(m_videoMode, Arrow::Direction::Right)));
-    m_eventSystem.subscribe<TapeLoadedEvent>([this](const TapeLoadedEvent& tapeLoadedEvent) {
+    m_stationaryArrows.emplace_back(Arrow::Direction::Left, getPosition(m_videoMode, Arrow::Direction::Left));
+    m_stationaryArrows.emplace_back(Arrow::Direction::Up, getPosition(m_videoMode, Arrow::Direction::Up));
+    m_stationaryArrows.emplace_back(Arrow::Direction::Down, getPosition(m_videoMode, Arrow::Direction::Down));
+    m_stationaryArrows.emplace_back(Arrow::Direction::Right, getPosition(m_videoMode, Arrow::Direction::Right));
+    m_eventSystem.subscribe<TapeLoadedEvent>([this](const auto& tapeLoadedEvent) {
         m_tape = tapeLoadedEvent.tape;
-        m_songTime = 0.f;
+    });
+    m_eventSystem.subscribe<GameStateChangeEvent>([this](const GameStateChangeEvent& event) {
+        if (GameState::Play == event.to) {
+            m_songTime = {};
+            m_nextFrameTime = {};
+            m_score = {};
+            m_movingArrows.clear();
+        }
     });
 }
 
 Game::~Game() = default;
 
-void Game::handleEvent(const sf::Event& event) {
+void Game::handleEvent(const sf::Event& event, sf::View*) {
+    handleMouseMoved(event);
+    handleMousePressed(event);
+    handleButtonPressed(event);
+}
 
-    constexpr auto perfectWindow = 0.05f;
-    constexpr auto goodWindow = 0.1f;
-    constexpr auto missWindow = 0.15f;
+void Game::update(float dt) {
+    m_backButton.setColor(m_isHovering ? sf::Color(255, 200, 200) : sf::Color::White);
+    m_scoreText.setString(std::to_string(m_score));
+    if (!m_tape.has_value()) {
+        return;
+    }
 
+    m_songTime += dt;
+    constexpr auto arrowSpeed = 250.f;
+    const auto secondsPerSixteenth = 60.f / m_tape->getBPM() / 4.f;
+    while (m_songTime >= m_nextFrameTime) {
+        const auto frame = m_tape->getNextFrame();
+        if (!frame.has_value()) {
+            break;
+        }
+        const auto spawnArrow = [this](bool shouldSpawn, Arrow::Direction direction) {
+            if (!shouldSpawn) {
+                return;
+            }
+            auto position = getPosition(m_videoMode, direction);
+            position.y = m_videoMode.size.y + 50.f;
+            m_movingArrows.emplace_back(direction, position, true);
+        };
+        spawnArrow(frame->down, Arrow::Direction::Down);
+        spawnArrow(frame->left, Arrow::Direction::Left);
+        spawnArrow(frame->right, Arrow::Direction::Right);
+        spawnArrow(frame->up, Arrow::Direction::Up);
+        m_nextFrameTime += secondsPerSixteenth;
+    }
+
+    std::ranges::for_each(m_movingArrows, [&](auto& arrow) { arrow.move({0.f, -arrowSpeed * dt}); });
+    m_movingArrows.erase(std::remove_if(m_movingArrows.begin(), m_movingArrows.end(),
+                                        [this](const auto& arrow) {
+                                            const auto arrowY = arrow.getPosition().y;
+                                            const auto stationaryY = m_stationaryArrows.at(0).getPosition().y;
+                                            return arrowY < stationaryY - missWindow;
+                                        }),
+                         m_movingArrows.end());
+}
+
+void Game::draw(sf::RenderTarget& target, sf::RenderStates states) const {
+    std::ranges::for_each(m_stationaryArrows, [&](const auto& arrow) { target.draw(arrow, states); });
+    std::ranges::for_each(m_movingArrows, [&](const auto& arrow) { target.draw(arrow, states); });
+    target.draw(m_scoreText, states);
+    target.draw(m_backButton, states);
+}
+
+void Game::handleMouseMoved(const sf::Event& event) {
     if (const auto mouseMoved = event.getIf<sf::Event::MouseMoved>()) {
         m_isHovering = m_backButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(mouseMoved->position));
     }
+}
+
+void Game::handleMousePressed(const sf::Event& event) {
     if (const auto mouseReleased = event.getIf<sf::Event::MouseButtonReleased>()) {
         if (m_backButton.getGlobalBounds().contains(static_cast<sf::Vector2f>(mouseReleased->position))) {
             m_eventSystem.publish(GameStateChangeEvent{.from = GameState::Play, .to = GameState::Home});
@@ -93,50 +160,40 @@ void Game::handleEvent(const sf::Event& event) {
     }
 }
 
-void Game::update(float dt) {
-    m_backButton.setColor(m_isHovering ? sf::Color(255, 200, 200) : sf::Color::White);
-    if (!m_tape.has_value()) {
-        return;
-    }
-    m_songTime += dt;
-    const auto secondsPerSixteenth = 60.f / m_tape->getBPM() / 4.f;
-    while (m_songTime >= m_nextFrameTime) {
-        if (auto frame = m_tape->getNextFrame()) {
-            if (frame->down) {
-                auto position = getPosition(m_videoMode, Arrow::Direction::Down);
-                position.y = m_videoMode.size.y + 100.f;
-                m_movingArrows.emplace_back(Arrow::Direction::Down, position, true);
+void Game::handleButtonPressed(const sf::Event& event) {
+    const std::unordered_map<sf::Keyboard::Key, Arrow::Direction> keys{
+        {sf::Keyboard::Key::Left, Arrow::Direction::Left},
+        {sf::Keyboard::Key::Up, Arrow::Direction::Up},
+        {sf::Keyboard::Key::Down, Arrow::Direction::Down},
+        {sf::Keyboard::Key::Right, Arrow::Direction::Right},
+    };
+
+    if (const auto buttonPressed = event.getIf<sf::Event::KeyPressed>()) {
+        if (!keys.contains(buttonPressed->code)) {
+            return;
+        }
+        const auto& arrow = m_stationaryArrows.at(static_cast<std::underlying_type_t<Arrow::Direction>>(keys.at(buttonPressed->code)));
+        auto iter = std::ranges::min_element(m_movingArrows, {}, [&](const auto& arrow) {
+            if (arrow.getDirection() != keys.at(buttonPressed->code)) {
+                return std::numeric_limits<float>::max();
             }
-            if (frame->left) {
-                auto position = getPosition(m_videoMode, Arrow::Direction::Left);
-                position.y = m_videoMode.size.y + 100.f;
-                m_movingArrows.emplace_back(Arrow::Direction::Left, position, true);
-            }
-            if (frame->right) {
-                auto position = getPosition(m_videoMode, Arrow::Direction::Right);
-                position.y = m_videoMode.size.y + 100.f;
-                m_movingArrows.emplace_back(Arrow::Direction::Right, position, true);
-            }
-            if (frame->up) {
-                auto position = getPosition(m_videoMode, Arrow::Direction::Up);
-                position.y = m_videoMode.size.y + 100.f;
-                m_movingArrows.emplace_back(Arrow::Direction::Up, position, true);
-            }
-            m_nextFrameTime += secondsPerSixteenth;
-        } else {
-            break;
+            return std::abs(arrow.getPosition().y - arrow.getPosition().y);
+        });
+        if (iter == m_movingArrows.cend() || arrow.getDirection() != iter->getDirection()) {
+            return;
+        }
+        const auto distance = std::abs(iter->getPosition().y - arrow.getPosition().y);
+        if (distance <= perfectWindow) {
+            m_score += 300;
+            m_movingArrows.erase(iter);
+        } else if (distance <= goodWindow) {
+            m_score += 100;
+            m_movingArrows.erase(iter);
+        } else if (distance <= missWindow) {
+            m_score += 0;
+            m_movingArrows.erase(iter);
         }
     }
-
-    // TODO: Update moving arrows
 }
-
-void Game::draw(sf::RenderTarget& target, sf::RenderStates states) const {
-    std::ranges::for_each(m_stationaryArrows, [&](const auto& arrow) { target.draw(arrow, states); });
-    std::ranges::for_each(m_movingArrows, [&](const auto& arrow) { target.draw(arrow, states); });
-    target.draw(m_backButton, states);
-}
-
-void Game::spawnArrows(const dd::Tape::Frame& frame) {}
 
 } // namespace dd

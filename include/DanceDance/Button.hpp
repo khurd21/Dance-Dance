@@ -7,6 +7,7 @@
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Window/Event.hpp>
+#include <SFML/Graphics/View.hpp>
 
 #include <string>
 
@@ -18,7 +19,7 @@ namespace dd {
 class Button : public IScene {
   public:
     explicit Button(const std::string& label, const sf::Font& font, const sf::Vector2f& position, EventSystem& eventSystem);
-    void handleEvent(const sf::Event& event) override;
+    void handleEvent(const sf::Event& event, sf::View* view = nullptr) override;
     void update(float dt) override;
 
   private:

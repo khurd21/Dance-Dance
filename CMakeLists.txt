@@ -28,6 +28,8 @@ set(sources
     src/Game.cpp
     src/Tape.cpp
     src/SVGTexture.cpp
+    src/SelectSong.cpp
+    src/SongFinder.cpp
 )
 
 set(includes
@@ -38,6 +40,8 @@ set(includes
     include/DanceDance/Game.hpp
     include/DanceDance/Tape.hpp
     include/DanceDance/SVGTexture.hpp
+    include/DanceDance/SelectSong.hpp
+    include/DanceDance/SongFinder.hpp
 )
 
 add_executable(DanceDance ${sources} ${includes})

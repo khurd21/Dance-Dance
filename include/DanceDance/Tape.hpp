@@ -4,6 +4,7 @@
 #include <array>
 #include <filesystem>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace dd {
@@ -21,12 +22,14 @@ class Tape {
     };
 
     float getBPM() const;
+    const std::string& getTitle() const;
     std::optional<Frame> getNextFrame();
 
   private:
     float m_bpm{};
+    std::string m_title;
     std::vector<Frame> m_tape;
-    std::vector<Frame>::const_iterator m_currentFrame;
+    std::size_t m_currentFrameIndex{};
 };
 
 } // namespace dd
