@@ -2,8 +2,8 @@
 #define DANCE_DANCE_ISCENE_HPP
 
 #include <SFML/Graphics/Drawable.hpp>
-#include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/View.hpp>
+#include <SFML/Window/Event.hpp>
 
 namespace dd {
 
