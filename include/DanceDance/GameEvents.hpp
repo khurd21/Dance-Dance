@@ -12,8 +12,15 @@ struct TapeLoadedEvent {
     Tape tape;
 };
 
-struct ButtonClickedEvent {
+struct ButtonEvent {
+    enum class Type {
+        Clicked,
+        Hovered,
+        Unhovered,
+        None,
+    };
     std::string buttonName;
+    Type eventType{Type::None};
 };
 
 struct ExitGameEvent {};

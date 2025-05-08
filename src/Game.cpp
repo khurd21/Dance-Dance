@@ -11,13 +11,13 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include <SFML/Graphics/View.hpp>
 #include <SFML/System/Angle.hpp>
 #include <SFML/System/String.hpp>
 #include <SFML/System/Vector2.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/Mouse.hpp>
 #include <SFML/Window/VideoMode.hpp>
-#include <SFML/Graphics/View.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -78,9 +78,7 @@ Game::Game(const sf::Font& font, const sf::VideoMode& videoMode, EventSystem& ev
     m_stationaryArrows.emplace_back(Arrow::Direction::Up, getPosition(m_videoMode, Arrow::Direction::Up));
     m_stationaryArrows.emplace_back(Arrow::Direction::Down, getPosition(m_videoMode, Arrow::Direction::Down));
     m_stationaryArrows.emplace_back(Arrow::Direction::Right, getPosition(m_videoMode, Arrow::Direction::Right));
-    m_eventSystem.subscribe<TapeLoadedEvent>([this](const auto& tapeLoadedEvent) {
-        m_tape = tapeLoadedEvent.tape;
-    });
+    m_eventSystem.subscribe<TapeLoadedEvent>([this](const auto& tapeLoadedEvent) { m_tape = tapeLoadedEvent.tape; });
     m_eventSystem.subscribe<GameStateChangeEvent>([this](const GameStateChangeEvent& event) {
         if (GameState::Play == event.to) {
             m_songTime = {};

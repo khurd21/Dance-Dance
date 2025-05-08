@@ -1,21 +1,23 @@
 #include <DanceDance/SelectSong.hpp>
 
+#include <SFML/Graphics/Color.hpp>
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/Rect.hpp>
+#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/View.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/VideoMode.hpp>
-#include <SFML/Graphics/RectangleShape.hpp>
-#include <SFML/Graphics/Color.hpp>
 
 #include <DanceDance/Button.hpp>
 #include <DanceDance/GameEvents.hpp>
 #include <DanceDance/SongFinder.hpp>
 
 #include <algorithm>
+#include <exception>
+#include <optional>
 
 namespace {
 
@@ -53,14 +55,10 @@ SelectSong::SelectSong(const sf::Font& font, const sf::VideoMode& videoMode, Eve
     const auto& availableSongs = SongFinder::GetSongFinder().getFoundSongs();
     std::ranges::for_each(availableSongs, [&](const auto& song) {
         m_songs.emplace_back(Button(song.title, font, {scrollAreaWidth / 2.f, contentHeight + buttonHeight / 2.f}, m_eventSystem));
-        m_eventSystem.subscribe<ButtonClickedEvent>([&](const auto& event) {
-            if (song.title == event.buttonName) {
-                m_eventSystem.publish<TapeLoadedEvent>(TapeLoadedEvent{.tape = Tape(song.tapePath)});
-                m_eventSystem.publish<GameStateChangeEvent>(GameStateChangeEvent{
-                    .from = GameState::SelectSong,
-                    .to = GameState::Play,
-                });
-            }
+        m_eventSystem.subscribe<ButtonEvent>([&](const auto& event) {
+            onButtonClickedEvent(song, event);
+            onButtonHoveredEvent(song, event);
+            onButtonUnhoveredEvent(song, event);
         });
         contentHeight += buttonHeight + buttonSpacing;
     });
@@ -82,6 +80,46 @@ void SelectSong::handleEvent(const sf::Event& event, sf::View*) {
                 .to = GameState::Home,
             });
         }
+    }
+}
+
+void SelectSong::onButtonHoveredEvent(const SongFinder::Song& song, const ButtonEvent& event) {
+    if (ButtonEvent::Type::Hovered != event.eventType) {
+        return;
+    }
+    if (song.title == event.buttonName) {
+        try {
+            m_currentPreview = sf::Music(song.audioPath);
+            m_currentPreview->setLooping(false);
+            m_currentPreview->play();
+        } catch (const std::exception&) {
+        }
+    }
+}
+
+void SelectSong::onButtonUnhoveredEvent(const SongFinder::Song& song, const ButtonEvent& event) {
+    if (ButtonEvent::Type::Unhovered != event.eventType) {
+        return;
+    }
+    if (song.title == event.buttonName) {
+        m_currentPreview = std::nullopt;
+    }
+}
+
+void SelectSong::onButtonClickedEvent(const SongFinder::Song& song, const ButtonEvent& event) {
+    if (ButtonEvent::Type::Clicked != event.eventType) {
+        return;
+    }
+    if (song.title == event.buttonName) {
+        if (m_currentPreview.has_value()) {
+            m_currentPreview->stop();
+            m_currentPreview.reset();
+        }
+        m_eventSystem.publish<TapeLoadedEvent>(TapeLoadedEvent{.tape = Tape(song.tapePath)});
+        m_eventSystem.publish<GameStateChangeEvent>(GameStateChangeEvent{
+            .from = GameState::SelectSong,
+            .to = GameState::Play,
+        });
     }
 }
 

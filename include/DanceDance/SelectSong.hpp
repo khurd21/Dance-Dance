@@ -1,6 +1,7 @@
 #ifndef DANCE_DANCE_SELECT_SONG_HPP
 #define DANCE_DANCE_SELECT_SONG_HPP
 
+#include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
@@ -12,8 +13,11 @@
 
 #include <DanceDance/Button.hpp>
 #include <DanceDance/EventSystem.hpp>
+#include <DanceDance/GameEvents.hpp>
 #include <DanceDance/IScene.hpp>
+#include <DanceDance/SongFinder.hpp>
 
+#include <optional>
 #include <vector>
 
 namespace dd {
@@ -28,6 +32,10 @@ class SelectSong : public IScene {
     void handleScroll(float dt);
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+    void onButtonHoveredEvent(const SongFinder::Song& song, const ButtonEvent& event);
+    void onButtonUnhoveredEvent(const SongFinder::Song& song, const ButtonEvent& event);
+    void onButtonClickedEvent(const SongFinder::Song& song, const ButtonEvent& event);
+
     sf::Text m_title;
     sf::Sprite m_backButton;
     sf::View m_scrollableView;
@@ -39,6 +47,7 @@ class SelectSong : public IScene {
     float m_scrollContentHeight{};
     float m_currentScrollPosition{};
     float m_maxScrollPosition{};
+    std::optional<sf::Music> m_currentPreview;
 };
 
 } // namespace dd

@@ -6,8 +6,8 @@
 #include <SFML/Graphics/RenderStates.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 #include <SFML/Graphics/Text.hpp>
-#include <SFML/Window/Event.hpp>
 #include <SFML/Graphics/View.hpp>
+#include <SFML/Window/Event.hpp>
 
 #include <string>
 

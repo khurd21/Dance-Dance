@@ -64,7 +64,11 @@ void MainMenu::applySettingsOptions(const sf::Font& font) {
 
     m_options.push_back(Button("Play", font, {m_videoMode.size.x / 2.f, buttonStartPosition + (0 * buttonSpacing)}, m_eventSystem));
     m_options.push_back(Button("Exit", font, {m_videoMode.size.x / 2.f, buttonStartPosition + (1 * buttonSpacing)}, m_eventSystem));
-    m_eventSystem.subscribe<ButtonClickedEvent>([this](const auto& event) {
+    m_eventSystem.subscribe<ButtonEvent>([this](const auto& event) {
+        if (event.eventType != ButtonEvent::Type::Clicked) {
+            return;
+        }
+
         const auto& name = event.buttonName;
         if ("Play" == name) {
             m_eventSystem.publish(GameStateChangeEvent{.from = GameState::Home, .to = GameState::SelectSong});

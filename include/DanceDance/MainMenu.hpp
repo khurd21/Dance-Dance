@@ -4,9 +4,9 @@
 #include <SFML/Graphics/Drawable.hpp>
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/Text.hpp>
+#include <SFML/Graphics/View.hpp>
 #include <SFML/Window/Event.hpp>
 #include <SFML/Window/VideoMode.hpp>
-#include <SFML/Graphics/View.hpp>
 
 #include <DanceDance/Button.hpp>
 #include <DanceDance/EventSystem.hpp>
