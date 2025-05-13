@@ -1,6 +1,7 @@
 #ifndef DANCE_DANCE_GAME_HPP
 #define DANCE_DANCE_GAME_HPP
 
+#include <SFML/Audio/Music.hpp>
 #include <SFML/Graphics/Font.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Text.hpp>
@@ -35,13 +36,17 @@ class Game : public IScene {
     void handleButtonPressed(const sf::Event& event);
 
     sf::Text m_scoreText;
+    sf::Text m_multiplierText;
     sf::Sprite m_backButton;
     sf::VideoMode m_videoMode;
 
     std::optional<Tape> m_tape;
+    std::optional<sf::Music> m_music;
     float m_songTime{};
     float m_nextFrameTime{};
     int m_score{};
+    int m_multiplier{1};
+    int m_streak{};
 
     bool m_isHovering{};
     std::vector<Arrow> m_stationaryArrows;

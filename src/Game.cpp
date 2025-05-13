@@ -21,6 +21,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <format>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -60,19 +61,27 @@ sf::Vector2f getPosition(const sf::VideoMode& videoMode, dd::Arrow::Direction di
 }
 
 constexpr auto perfectWindow = 20.f;
-constexpr auto goodWindow = 80.f;
-constexpr auto missWindow = 160.f;
+constexpr auto goodWindow = 50.f;
+constexpr auto missWindow = 100.f;
+
+constexpr auto perfectScore = 50;
+constexpr auto goodScore = 10;
+constexpr auto missScore = 0;
+constexpr auto multiplierIncrease = 15;
+constexpr auto multiplierMaximum = 5;
 
 } // namespace
 
 namespace dd {
 
 Game::Game(const sf::Font& font, const sf::VideoMode& videoMode, EventSystem& eventSystem)
-    : m_scoreText(font, "0", 80), m_backButton(defaultTexture), m_eventSystem(eventSystem), m_videoMode(videoMode) {
+    : m_scoreText(font, "0", 80), m_multiplierText(font, "x0", 80), m_backButton(defaultTexture), m_eventSystem(eventSystem), m_videoMode(videoMode) {
     m_backButton.setPosition({20.f, 20.f});
     m_backButton.setScale({1.2f, 1.2f});
     m_scoreText.setOrigin({m_scoreText.getLocalBounds().size.x, 0.f});
     m_scoreText.setPosition({videoMode.size.x / 1.1f, 20.f});
+    m_multiplierText.setOrigin({m_multiplierText.getLocalBounds().size.x, 0.f});
+    m_multiplierText.setPosition({m_scoreText.getPosition().x, m_scoreText.getPosition().y + m_scoreText.getLocalBounds().size.y + 5.f});
 
     m_stationaryArrows.emplace_back(Arrow::Direction::Left, getPosition(m_videoMode, Arrow::Direction::Left));
     m_stationaryArrows.emplace_back(Arrow::Direction::Up, getPosition(m_videoMode, Arrow::Direction::Up));
@@ -100,6 +109,7 @@ void Game::handleEvent(const sf::Event& event, sf::View*) {
 void Game::update(float dt) {
     m_backButton.setColor(m_isHovering ? sf::Color(255, 200, 200) : sf::Color::White);
     m_scoreText.setString(std::to_string(m_score));
+    m_multiplierText.setString(std::format("x{}", m_multiplier));
     if (!m_tape.has_value()) {
         return;
     }
@@ -128,6 +138,7 @@ void Game::update(float dt) {
     }
 
     std::ranges::for_each(m_movingArrows, [&](auto& arrow) { arrow.move({0.f, -arrowSpeed * dt}); });
+    const auto previousSize{m_movingArrows.size()};
     m_movingArrows.erase(std::remove_if(m_movingArrows.begin(), m_movingArrows.end(),
                                         [this](const auto& arrow) {
                                             const auto arrowY = arrow.getPosition().y;
@@ -135,12 +146,18 @@ void Game::update(float dt) {
                                             return arrowY < stationaryY - missWindow;
                                         }),
                          m_movingArrows.end());
+    const auto currentSize{m_movingArrows.size()};
+    if (currentSize != previousSize) {
+        m_multiplier = 1;
+        m_streak = 0;
+    }
 }
 
 void Game::draw(sf::RenderTarget& target, sf::RenderStates states) const {
     std::ranges::for_each(m_stationaryArrows, [&](const auto& arrow) { target.draw(arrow, states); });
     std::ranges::for_each(m_movingArrows, [&](const auto& arrow) { target.draw(arrow, states); });
     target.draw(m_scoreText, states);
+    target.draw(m_multiplierText, states);
     target.draw(m_backButton, states);
 }
 
@@ -182,13 +199,21 @@ void Game::handleButtonPressed(const sf::Event& event) {
         }
         const auto distance = std::abs(iter->getPosition().y - arrow.getPosition().y);
         if (distance <= perfectWindow) {
-            m_score += 300;
+            ++m_streak;
+            m_multiplier += static_cast<int>(m_streak % multiplierIncrease == 0);
+            m_multiplier %= multiplierMaximum;
+            m_score += perfectScore * m_multiplier;
             m_movingArrows.erase(iter);
         } else if (distance <= goodWindow) {
-            m_score += 100;
+            ++m_streak;
+            m_multiplier += static_cast<int>(m_streak % multiplierIncrease == 0);
+            m_multiplier %= multiplierMaximum;
+            m_score += goodScore * m_multiplier;
             m_movingArrows.erase(iter);
         } else if (distance <= missWindow) {
-            m_score += 0;
+            m_streak = 0;
+            m_multiplier = 1;
+            m_score += missScore * m_multiplier;
             m_movingArrows.erase(iter);
         }
     }
