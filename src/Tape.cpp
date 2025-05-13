@@ -48,10 +48,14 @@ float Tape::getBPM() const { return m_bpm; }
 const std::string& Tape::getTitle() const { return m_title; }
 
 std::optional<Tape::Frame> Tape::getNextFrame() {
-    if (m_currentFrameIndex >= m_tape.size()) {
+    if (!hasNextFrame()) {
         return std::nullopt;
     }
     return m_tape.at(m_currentFrameIndex++);
+}
+
+bool Tape::hasNextFrame() const {
+    return m_currentFrameIndex < m_tape.size();
 }
 
 } // namespace dd
