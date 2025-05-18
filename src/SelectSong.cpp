@@ -115,7 +115,7 @@ void SelectSong::onButtonClickedEvent(const SongFinder::Song& song, const Button
             m_currentPreview->stop();
             m_currentPreview.reset();
         }
-        m_eventSystem.publish<TapeLoadedEvent>(TapeLoadedEvent{.tape = Tape(song.tapePath)});
+        m_eventSystem.publish<TapeLoadedEvent>(TapeLoadedEvent{.tape = Tape(song.tapePath), .audioPath = song.audioPath});
         m_eventSystem.publish<GameStateChangeEvent>(GameStateChangeEvent{
             .from = GameState::SelectSong,
             .to = GameState::Play,

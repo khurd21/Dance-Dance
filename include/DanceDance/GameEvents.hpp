@@ -1,15 +1,17 @@
 #ifndef DANCE_DANCE_GAME_EVENTS_HPP
 #define DANCE_DANCE_GAME_EVENTS_HPP
 
-#include <string>
-
 #include <DanceDance/GameState.hpp>
 #include <DanceDance/Tape.hpp>
+
+#include <string>
+#include <filesystem>
 
 namespace dd {
 
 struct TapeLoadedEvent {
     Tape tape;
+    std::filesystem::path audioPath;
 };
 
 struct ButtonEvent {

@@ -24,6 +24,7 @@ class Tape {
     float getBPM() const;
     const std::string& getTitle() const;
     std::optional<Frame> getNextFrame();
+    bool hasNextFrame() const;
 
   private:
     float m_bpm{};

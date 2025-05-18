@@ -12,11 +12,12 @@
 #include <DanceDance/Runner.hpp>
 #include <DanceDance/SelectSong.hpp>
 
+#include <filesystem>
 #include <memory>
 
 namespace dd {
 
-Runner::Runner() : m_currentState(GameState::Home), m_font("assets/fonts/perfect-delight-1992.otf") {
+Runner::Runner() : m_currentState(GameState::Home), m_font(std::filesystem::absolute("assets/fonts/perfect-delight-1992.otf")) {
     const auto videoMode = sf::VideoMode::getFullscreenModes().at(0);
     m_renderWindow = sf::RenderWindow(videoMode, "Dance Dance", sf::State::Fullscreen);
     m_states.emplace(GameState::Home, std::make_unique<MainMenu>(m_font, videoMode, m_eventSystem));
